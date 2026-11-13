@@ -5,6 +5,9 @@ import UniformTypeIdentifiers
 
 struct Options {
     var snapshot: String?
+    var profile: String?
+    var duration: Double = 60
+    var warmup: Double = 30
     var time: Double = 20
     var width = 2880
     var height = 1800
@@ -17,6 +20,9 @@ struct Options {
         while let arg = it.next() {
             switch arg {
             case "--snapshot": snapshot = it.next()
+            case "--profile": profile = it.next()
+            case "--duration": duration = it.next().flatMap(Double.init) ?? .nan
+            case "--warmup": warmup = it.next().flatMap(Double.init) ?? .nan
             case "--time": time = it.next().flatMap(Double.init) ?? time
             case "--scale": scale = it.next().flatMap(Float.init) ?? scale
             case "--seed": seed = it.next().flatMap { UInt64($0) } ?? seed
@@ -116,6 +122,15 @@ if let path = options.snapshot {
         try writeSnapshot(options, to: path)
     } catch {
         FileHandle.standardError.write(Data("snapshot failed: \(error)\n".utf8))
+        exit(1)
+    }
+    exit(0)
+}
+if let path = options.profile {
+    do {
+        try runProfile(options, directory: URL(fileURLWithPath: path))
+    } catch {
+        FileHandle.standardError.write(Data("profile failed: \(error)\n".utf8))
         exit(1)
     }
     exit(0)

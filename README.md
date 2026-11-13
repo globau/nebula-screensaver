@@ -28,6 +28,14 @@ make install
 
 This builds `Nebula.saver` and copies it to `~/Library/Screen Savers`.  `make run` opens a test window instead, which is handy for trying it without waiting for the screensaver to start.
 
+## Power profiling
+
+Run `make profile` from Terminal.  It asks for `sudo` access to `powermetrics`, samples an idle baseline for 20 seconds, warms the renderer for 30 seconds, then measures 60 seconds of rendering at 30 fps.  Keep other activity and connected displays consistent between runs.  It saves raw samples, source hashes, settings, achieved frame rate and average baseline-adjusted power in a new directory under `build/profiles/`.
+
+The profile renders offscreen at 2880x1800 pixels and 2x scale, using seed 1 and the flight segment from 60 to 120 seconds.  It measures rendering without window presentation or compositor costs; CPU, GPU and combined power readings cover the whole system's processors, not total machine power.  A run fails if the renderer cannot sustain the requested frame rate.
+
+Settings can be overridden, for example `make profile SIZE=3840x2160 SCALE=2 SEED=5 TIME=75`.  `TIME` is the flight time at the start of measurement and must be at least `WARMUP` (default 30 seconds).  `INTERVAL` sets the sample interval in milliseconds (default 2000); `SAMPLES` and `BASELINE_SAMPLES` set the rendering and baseline sample counts (defaults 30 and 10).  Rendering duration is `SAMPLES * INTERVAL / 1000` seconds.
+
 ## Licence
 
 MIT, see [LICENSE](LICENSE).

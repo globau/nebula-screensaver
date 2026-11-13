@@ -29,6 +29,8 @@ final class Renderer {
     private var frame: UInt32 = 0
     private let pocketCentre: SIMD3<Double>
 
+    var hasRenderTargets: Bool { targets != nil }
+
     init(context: MetalContext, seed: UInt64) {
         self.context = context
         camera = Camera(seed: seed)
