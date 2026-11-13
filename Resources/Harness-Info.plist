@@ -5,7 +5,7 @@
 	<key>CFBundleExecutable</key>
 	<string>NebulaHarness</string>
 	<key>CFBundleIdentifier</key>
-	<string>local.nebula.harness</string>
+	<string>au.glob.NebulaHarness</string>
 	<key>CFBundleInfoDictionaryVersion</key>
 	<string>6.0</string>
 	<key>CFBundleName</key>

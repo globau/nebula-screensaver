@@ -12,15 +12,21 @@ This project is vibe coded.  All of the code was written by Claude Code.  I stee
 
 ## Requirements
 
-macOS 14 or later on Apple silicon, and the Xcode command line tools (`xcode-select --install`).  It is tuned for HiDPI displays.
+macOS 14 or later on Apple silicon.  It is tuned for HiDPI displays.
 
-## Building and installing
+## Installing
+
+Download the latest `nebula-<version>.zip` from the [Releases](../../releases) page and unzip it.  Double-click `Nebula.saver` and macOS will offer to install it, then choose Nebula in System Settings under Screen Saver.  To update, install a newer release over the top.
+
+## Building from source
+
+Building needs the Xcode command line tools (`xcode-select --install`).
 
 ```sh
 make install
 ```
 
-This builds `Nebula.saver` and copies it to `~/Library/Screen Savers`; then choose Nebula in System Settings under Screen Saver.  `make run` opens a test window instead, which is handy for trying it without waiting for the screensaver to start.
+This builds `Nebula.saver` and copies it to `~/Library/Screen Savers`.  `make run` opens a test window instead, which is handy for trying it without waiting for the screensaver to start.
 
 ## Licence
 

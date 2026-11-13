@@ -36,6 +36,7 @@ The user wants a "Hollywood CGI" look first; CPU/GPU cost is to be tuned once th
 - The field is domain-warped before sampling; the gradient ignores the warp's Jacobian.
 
 ## Build
+- Releases: `VERSION` holds a plain number (not semver), used as both `CFBundleShortVersionString` and `CFBundleVersion` of the saver. The saver is signed with the first Developer ID Application identity in the keychain (ad-hoc if none) with the hardened runtime; the harness stays ad-hoc. `make notarise` submits to Apple with the `notarytool` keychain profile and staples, `make dist` does a clean notarised build into `build/nebula-$(VERSION).zip`, and `make release` checks the tree is clean, pushed and current, then tags `v$(VERSION)` and creates the GitHub release. Modelled on the user's globau/android-notification-bridge Makefile. Bump `VERSION` by hand before releasing.
 - `make` (saver + harness), `make run`, `make snapshot [TIME=..] [SIZE=..] [SCALE=..] [SEED=..]` (defaults to a 2x Retina frame at 60 s, past the intro) -> `build/snapshot.png`, `make thumbnail [SEED=..] [TIME=..]` (regenerates `Resources/thumbnail.png` and `thumbnail@2x.png`, the 90x58 System Settings tile, from seed 3 at 60 s by default; needs the gpu, so the images are checked in), `make install`.
 - Shaders are compiled at runtime from `Shaders.metal` in the bundle's Resources (the offline Metal Toolchain is not installed); shader compile errors only show at runtime, so run a snapshot after any shader edit.
 - `-module-cache-path build/ModuleCache` is needed because the sandbox blocks the default cache in `/var/folders`.
@@ -47,5 +48,5 @@ The user wants a "Hollywood CGI" look first; CPU/GPU cost is to be tuned once th
 - Gpu struct members are all `float4` so Swift and MSL layouts match; keep it that way.
 
 ## Quirks
-- `legacyScreenSaver` caches the loaded bundle; `make install` runs `killall legacyScreenSaver`.
+- `legacyScreenSaver` caches the loaded bundle; `make install` runs `killall legacyScreenSaver` (`|| true`, as it normally is not running at install time). `WallpaperLegacyExtension` also loads third-party saver bundles and may host the System Settings preview; unconfirmed whether it caches Nebula, so suspect it if the preview looks stale after an install.
 - Instances can linger after the saver stops; the view stops its display link on the `com.apple.screensaver.willstop` distributed notification.
