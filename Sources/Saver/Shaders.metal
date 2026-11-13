@@ -206,6 +206,9 @@ static float crossing(float d0, float d1, float w, float len) {
         float m = 0.5 * (d0 + d1) / w;
         return len * exp(-m * m) / (1.7725 * w);
     }
+    // both erf values round to the same sign beyond this distance
+    float limit = 4.5 * w;
+    if (min(d0, d1) > limit || max(d0, d1) < -limit) return 0;
     return len * (erfApprox(d1 / w) - erfApprox(d0 / w)) / (2.0 * dd);
 }
 
