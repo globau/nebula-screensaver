@@ -100,6 +100,10 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
         window.makeKeyAndOrderFront(nil)
         view.startAnimation()
         self.window = window
+        NSEvent.addLocalMonitorForEvents(matching: .keyDown) { event in
+            if event.keyCode == 53 { NSApp.terminate(nil) }
+            return event
+        }
         NSApp.activate()
     }
 
