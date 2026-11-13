@@ -15,6 +15,7 @@ struct Uniforms {
     var previousForward: SIMD4<Float> // w 1 if the nebula history is valid
     var motion: SIMD4<Float>          // xyz camera displacement since last frame, w weight of the new frame
     var jitter: SIMD4<Float>          // xy nebula ray offset in nebula pixels, zw history width, height
+    var pocket: SIMD4<Float>          // xyz camera offset from the pocket centre (unwrapped), w radius
 }
 
 struct BloomStep {

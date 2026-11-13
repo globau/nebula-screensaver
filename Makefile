@@ -50,11 +50,11 @@ run: harness
 	$(HARNESS)/Contents/MacOS/NebulaHarness
 
 snapshot: harness
-	$(HARNESS)/Contents/MacOS/NebulaHarness --snapshot $(BUILD)/snapshot.png --time $(or $(TIME),20) --size $(or $(SIZE),2880x1800) --scale $(or $(SCALE),2) --seed $(or $(SEED),1)
+	$(HARNESS)/Contents/MacOS/NebulaHarness --snapshot $(BUILD)/snapshot.png --time $(or $(TIME),60) --size $(or $(SIZE),2880x1800) --scale $(or $(SCALE),2) --seed $(or $(SEED),1)
 
 # regenerates the System Settings tile images (90x58 and 2x) from a fixed seed and time
 thumbnail: harness
-	$(HARNESS)/Contents/MacOS/NebulaHarness --snapshot $(BUILD)/thumbnail-source.png --time $(or $(TIME),30) --size 1440x928 --scale 1 --seed $(or $(SEED),3)
+	$(HARNESS)/Contents/MacOS/NebulaHarness --snapshot $(BUILD)/thumbnail-source.png --time $(or $(TIME),60) --size 1440x928 --scale 1 --seed $(or $(SEED),3)
 	sips -z 116 180 $(BUILD)/thumbnail-source.png --out Resources/thumbnail@2x.png
 	sips -z 58 90 $(BUILD)/thumbnail-source.png --out Resources/thumbnail.png
 

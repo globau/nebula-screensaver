@@ -60,9 +60,12 @@ struct FlightPath {
     private var segments: [Segment] = []
     private var distance: Double = 0
 
-    init(start: SIMD3<Double>, heading: SIMD3<Double>, seed: UInt64) {
+    // the first `straight` units run dead ahead; four collinear waypoints keep the first segment
+    // exactly straight, and swerving only begins in the segment after
+    init(start: SIMD3<Double>, heading: SIMD3<Double>, straight: Double, seed: UInt64) {
         rng = SplitMix64(seed: seed)
-        points = [start - simd_normalize(heading) * 200, start]
+        let h = simd_normalize(heading)
+        points = [start - h * 200, start, start + h * straight, start + h * (straight + 120)]
         fill()
     }
 

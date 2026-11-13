@@ -27,10 +27,12 @@ final class Renderer {
     private var size = (width: 0, height: 0)
     private var pixelScale: Float = 1
     private var frame: UInt32 = 0
+    private let pocketCentre: SIMD3<Double>
 
     init(context: MetalContext, seed: UInt64) {
         self.context = context
         camera = Camera(seed: seed)
+        pocketCentre = camera.worldPosition - camera.basis.forward * Tuning.pocketOffset
     }
 
     func resize(width: Int, height: Int, pixelScale: Float) {
@@ -170,7 +172,8 @@ final class Renderer {
             previousForward: pack(last.basis.forward, previous == nil ? 0 : 1),
             motion: pack(view.position - last.position, Double(Tuning.temporalBlend)),
             jitter: SIMD4(Self.halton(Int(frame % 16) + 1, 2) - 0.5, Self.halton(Int(frame % 16) + 1, 3) - 0.5,
-                          Float(targets.history[0].width), Float(targets.history[0].height)))
+                          Float(targets.history[0].width), Float(targets.history[0].height)),
+            pocket: pack(view.position - pocketCentre, Tuning.pocketRadius))
     }
 
     private static func halton(_ index: Int, _ base: Int) -> Float {

@@ -21,6 +21,7 @@ struct Uniforms {
     float4 previousForward; // w 1 if the nebula history is valid
     float4 motion;          // xyz camera displacement since last frame, w weight of the new frame
     float4 jitter;          // xy nebula ray offset in nebula pixels, zw history width, height
+    float4 pocket;          // xyz camera offset from the pocket centre (unwrapped), w radius
 };
 
 struct BloomStep {
@@ -230,6 +231,13 @@ static Point samplePoint(float3 p, float3 dir, texture3d<float> noise, texture3d
     return o;
 }
 
+// the flight starts inside an empty pocket; this is the signed distance past its wall, bent into
+// lobes by the warp field and frayed by the detail field so tendrils reach in ahead of the bulk
+constant float pocketRag = 36.0; // furthest the wall reaches inside the radius
+static float pocketDistance(float3 rel, Point p, float radius) {
+    return length(rel) + (p.warp.y - 0.5) * 48.0 + (p.detail.y - 0.5) * 24.0 - radius;
+}
+
 fragment NebulaOut nebulaFragment(FullscreenOut in [[stage_in]],
                                   constant Uniforms &u [[buffer(0)]],
                                   texture3d<float> noise [[texture(0)]],
@@ -242,6 +250,11 @@ fragment NebulaOut nebulaFragment(FullscreenOut in [[stage_in]],
     const float tMax = 260.0;
     float jitter = ign(in.position.xy + u.params.y * 5.588238);
     float t = tMin;
+    // nothing to gather until the ray can reach the pocket wall
+    float3 pocket = u.pocket.xyz;
+    float inner = u.pocket.w - pocketRag - 2.0;
+    float along = dot(pocket, dir), excess = dot(pocket, pocket) - inner * inner;
+    if (excess < 0) t = max(t, -along + sqrt(along * along - excess));
 
     const float3 shellBlue = float3(0.22, 0.48, 1.00);
     const float3 shellCyan = float3(0.45, 0.80, 1.00);
@@ -292,6 +305,14 @@ fragment NebulaOut nebulaFragment(FullscreenOut in [[stage_in]],
         float haze = smoothstep(0.3, 0.85, next.region.x) * smoothstep(0.25, 0.85, next.warp.y);
         gained += hydrogen * haze * haze * 0.0018 * len;
         float dust = 0.02 * smoothstep(0.55, 0.8, next.warp.y) * smoothstep(0.3, 0.6, next.region.y);
+
+        // the pocket: empty inside, the nebula rising past its wall with a brightened rim, like
+        // the shocked outer edge of a remnant
+        float wall = pocketDistance(pocket + dir * tNext, next, u.pocket.w);
+        float rim = (wall - 22.0) / 14.0;
+        float envelope = smoothstep(0.0, 30.0, wall);
+        gained *= envelope * (1.0 + 1.5 * exp(-rim * rim));
+        dust *= envelope;
 
         gained *= fade * transmittance;
         colour += gained;

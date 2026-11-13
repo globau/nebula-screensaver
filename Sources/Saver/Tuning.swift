@@ -24,6 +24,15 @@ enum Tuning {
     static let chromaticAberration: Float = 0.006
     static let grain: Float = 0.015
 
+    // the flight starts inside an empty pocket, its centre this far behind the start, and flies
+    // out through its ragged, glowing wall into the nebula
+    static let pocketRadius: Double = 290
+    static let pocketOffset: Double = 50
+    // the camera crosses the pocket fast, easing down to cruising speed as it reaches the nebula;
+    // the extra speed starts at speed * introBoost and fades out over introDuration seconds
+    static let introBoost: Double = 5
+    static let introDuration: Double = 15
+
     // the camera position wraps at this period; every noise tile the shader uses is a whole
     // fraction of it so the wrap is seamless
     static let worldPeriod: Double = 800
