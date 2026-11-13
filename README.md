@@ -36,6 +36,10 @@ The profile renders offscreen at 2880x1800 pixels and 2x scale, using seed 1 and
 
 Settings can be overridden, for example `make profile SIZE=3840x2160 SCALE=2 SEED=5 TIME=75`.  `TIME` is the flight time at the start of measurement and must be at least `WARMUP` (default 30 seconds).  `INTERVAL` sets the sample interval in milliseconds (default 2000); `SAMPLES` and `BASELINE_SAMPLES` set the rendering and baseline sample counts (defaults 30 and 10).  Rendering duration is `SAMPLES * INTERVAL / 1000` seconds.
 
+Run `make timings` for a separate GPU diagnostic with the same default resolution, scale, seed, warmup and flight segment.  It records Metal timestamps around the vertex and fragment stages of every render pass, grouping the bloom levels into downsample and upsample totals.  It requires GPU access, but no `sudo`.  Override `DURATION` (default 60 seconds), `WARMUP`, `TIME`, `SIZE`, `SCALE` or `SEED` as needed.  Settings, average stage timings, raw timestamps and clock calibration are saved under `build/timings/`.
+
+Stage timings can overlap or include dependency waits, so their sum is not the whole-frame duration.  Percentages refer to the sum of fragment-stage timings.  Timestamp collection adds diagnostic overhead and is disabled in the screensaver, snapshots and `make profile`.
+
 ## Licence
 
 MIT, see [LICENSE](LICENSE).

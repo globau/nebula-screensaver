@@ -23,7 +23,7 @@ HARNESS_SOURCES := $(wildcard Sources/Harness/*.swift)
 SHADERS := Sources/Saver/Shaders.metal
 THUMBNAILS := $(SAVER)/Contents/Resources/thumbnail.png $(SAVER)/Contents/Resources/thumbnail@2x.png
 
-.PHONY: all saver harness run snapshot profile thumbnail install notarise dist release clean check-notarise
+.PHONY: all saver harness run snapshot profile timings thumbnail install notarise dist release clean check-notarise
 
 all: saver harness
 
@@ -69,6 +69,14 @@ profile: harness
 	@/bin/zsh Scripts/profile.zsh "$(HARNESS)/Contents/MacOS/NebulaHarness" "$(BUILD)/profiles" \
 		"$(or $(SIZE),2880x1800)" "$(or $(SCALE),2)" "$(or $(SEED),1)" "$(or $(TIME),60)" \
 		"$(or $(WARMUP),30)" "$(or $(SAMPLES),30)" "$(or $(BASELINE_SAMPLES),10)" "$(or $(INTERVAL),2000)"
+
+timings: harness
+	@mkdir -p "$(BUILD)/timings"
+	@output=$$(mktemp -d "$(BUILD)/timings/run-XXXXXX") && \
+		echo "Results: $$output" && \
+		$(HARNESS)/Contents/MacOS/NebulaHarness --timings "$$output" --time $(or $(TIME),60) \
+		--size $(or $(SIZE),2880x1800) --scale $(or $(SCALE),2) --seed $(or $(SEED),1) \
+		--warmup $(or $(WARMUP),30) --duration $(or $(DURATION),60)
 
 # regenerates the System Settings tile images (90x58 and 2x) from a fixed seed and time
 thumbnail: harness

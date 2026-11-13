@@ -18,6 +18,8 @@ func runProfile(_ options: Options, directory: URL) throws {
     guard let target = context.device.makeTexture(descriptor: descriptor) else {
         throw SetupError("profile target allocation failed")
     }
+    let timings = try options.timings.map { _ in try PassTimings(device: context.device) }
+    var measuring = false
 
     let step = 1 / Double(Tuning.frameRate)
     let startFrame = Int((options.time / step).rounded())
@@ -30,12 +32,14 @@ func runProfile(_ options: Options, directory: URL) throws {
                 throw SetupError("profile command buffer allocation failed")
             }
             renderer.advance(by: step)
-            renderer.encode(into: buffer, target: target)
+            if measuring { timings?.beginFrame() }
+            renderer.encode(into: buffer, target: target, instrument: measuring ? timings?.configure : nil)
             buffer.commit()
             buffer.waitUntilCompleted()
             guard buffer.status == .completed else {
                 throw SetupError("profile gpu command failed: \(String(describing: buffer.error))")
             }
+            if measuring { try timings?.collectFrame() }
             return buffer.gpuEndTime - buffer.gpuStartTime
         }
     }
@@ -70,19 +74,29 @@ func runProfile(_ options: Options, directory: URL) throws {
 
     """
     try settings.write(to: directory.appendingPathComponent("renderer.txt"), atomically: true, encoding: .utf8)
-    try Data().write(to: directory.appendingPathComponent("ready"))
-    let timeout = ProcessInfo.processInfo.systemUptime + 60
-    while !FileManager.default.fileExists(atPath: directory.appendingPathComponent("start").path) {
-        guard ProcessInfo.processInfo.systemUptime < timeout else { throw SetupError("profile start timed out") }
-        Thread.sleep(forTimeInterval: 0.01)
+    if timings == nil {
+        try Data().write(to: directory.appendingPathComponent("ready"))
+        let timeout = ProcessInfo.processInfo.systemUptime + 60
+        while !FileManager.default.fileExists(atPath: directory.appendingPathComponent("start").path) {
+            guard ProcessInfo.processInfo.systemUptime < timeout else { throw SetupError("profile start timed out") }
+            Thread.sleep(forTimeInterval: 0.01)
+        }
     }
 
     let frames = max(1, Int((options.duration / step).rounded()))
+    measuring = true
+    timings?.beginMeasurement()
     let measured = try renderFrames(frames)
+    timings?.endMeasurement()
     let fps = Double(frames) / measured.elapsed
     let result = String(format: "frames: %d\nwall time: %.3f s\nachieved frame rate: %.2f\ngpu time: %.3f ms/frame\n",
                         frames, measured.elapsed, fps, measured.gpuTime / Double(frames) * 1000)
     try result.write(to: directory.appendingPathComponent("rendering.txt"), atomically: true, encoding: .utf8)
+    if let timings {
+        print(result, terminator: "")
+        print(try timings.writeResults(to: directory), terminator: "")
+        print("Results: \(directory.path)")
+    }
     guard fps >= Double(Tuning.frameRate) * 0.98 else {
         throw SetupError("profile could not sustain the requested frame rate; see rendering.txt")
     }
