@@ -18,6 +18,7 @@ The user wants a "Hollywood CGI" look first; CPU/GPU cost is to be tuned once th
 - `Sources/Saver/MetalContext.swift` — shared device, pipelines and the baked 3D noise and sheet textures (one instance for every per-screen view).
 - `Sources/Saver/Renderer.swift` — per-view camera, render targets and frame encoding.
 - `Sources/Saver/Shaders.metal` — all gpu code (see the pass list below).
+- `README.md`, `LICENSE` (MIT), `docs/screenshot.jpg` — the public repo's front page; the screenshot is seed 5 at 75 s, rendered 2880x1800 at 2x and saved as a 1920 px JPEG with `sips`. README prose follows the user's conventions: two spaces after full stops, straight quotes, ` - ` for dashes, and it states plainly that the project is vibe coded.
 - `Sources/Harness/main.swift` — test app hosting the view in a window (Cmd+Q quits); `--snapshot path --time T --size WxH --scale S [--seed N]` (seed defaults to 1 so snapshots are comparable) renders the last 60 frames before T at `Tuning.frameRate` (so temporal history converges) offscreen, writes the final frame to PNG and prints average GPU time.
 
 ## Frame passes
