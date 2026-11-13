@@ -3,7 +3,7 @@ import simd
 
 // per-view state: camera, render targets and frame encoding
 //
-// passes: nebula raymarch at point resolution -> temporal resolve against reprojected history
+// passes: nebula raymarch at half point resolution -> temporal upscale against reprojected history
 // -> bloom down and up chain -> final lens effects and tonemap into the drawable
 final class Renderer {
     private struct Targets {

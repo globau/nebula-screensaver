@@ -6,11 +6,11 @@ macOS screensaver (`.saver` bundle): endless flight through a crisp, filamentary
 Claude is the maintainer of this code and has complete ownership of it, with standing permission to refactor, restructure, rename or rewrite anything as it sees best. No need to ask before reorganising; keep this file accurate when doing so.
 
 ## Goal
-The user wants a "Hollywood CGI" look first; CPU/GPU cost is to be tuned once the visuals are right.
+The look is settled and the cost has been tuned with power measurements, which is why it runs at 30 fps with a half-resolution raymarch. The saver is public and released. New visual changes should keep GPU cost in mind: measure with the snapshot's GPU time, and don't trade power for small visual gains.
 
 ## Layout
 - `Sources/Saver/NebulaView.swift` — `ScreenSaverView` subclass (`@objc(NebulaView)`, the `NSPrincipalClass`). Frames come from `NSView.displayLink`, not `animateOneFrame`.
-- `Sources/Saver/Tuning.swift` — all tunable constants; `shaderMacros` injects `WORLD_PERIOD` into the shader so it has a single source.
+- `Sources/Saver/Tuning.swift` — engine-level constants (speed, resolutions, post, pocket, world period); the look itself (sheet tables, tile sizes, colours, masks, march limits, pocket rag and rim) lives in `Shaders.metal`, and the banking constants in `Camera.swift`. `shaderMacros` injects `WORLD_PERIOD` into the shader so it has a single source.
 - `Sources/Saver/GPUTypes.swift` — `Uniforms`, `BloomStep`, mirrored by the structs at the top of `Shaders.metal`.
 - `Sources/Saver/Random.swift` — `SplitMix64`.
 - `Sources/Saver/FlightPath.swift` — endless centripetal Catmull-Rom spline (arc-length parametrised) through randomly swerving waypoints, after a straight run at the start.
@@ -20,10 +20,12 @@ The user wants a "Hollywood CGI" look first; CPU/GPU cost is to be tuned once th
 - `Sources/Saver/Shaders.metal` — all gpu code (see the pass list below).
 - `README.md`, `LICENSE` (MIT), `docs/screenshot.jpg` — the public repo's front page; the screenshot is seed 5 at 75 s, rendered 2880x1800 at 2x and saved as a 1920 px JPEG with `sips`. README prose follows the user's conventions: two spaces after full stops, straight quotes, ` - ` for dashes, and it states plainly that the project is vibe coded.
 - `Sources/Harness/main.swift` — test app hosting the view in a window (Cmd+Q or Escape quits); `--snapshot path --time T --size WxH --scale S [--seed N]` (seed defaults to 1 so snapshots are comparable) renders the last 60 frames before T at `Tuning.frameRate` (so temporal history converges) offscreen, writes the final frame to PNG and prints average GPU time.
+- `Resources/` — `Saver-Info.plist` and `Harness-Info.plist` (bundle ids `au.glob.Nebula`, `au.glob.NebulaHarness`; the saver's version keys are overwritten from `VERSION` at build) and the checked-in thumbnails.
+- `Makefile` — all build, snapshot, install and release targets (see Build); `VERSION` — the release number.
 
 ## Frame passes
-1. Nebula raymarch at half point resolution (`Tuning.nebulaPointDivisor`) into rgba16f plus r32f radiance-weighted depth, with rays jittered per frame by a 16-frame Halton sequence.
-2. Temporal upscale into point-resolution history (`historyPointDivisor`): the new frame is reconstructed from its jittered samples with a gaussian of their true distances, last frame's result is reprojected through the camera motion at the coarse depth and clamped to the 3x3 neighbourhood, and the blend weight (`Tuning.temporalBlend`) is scaled by how close this frame's sample landed. Sheets are widened only to the history pixel footprint. Ping-pong history textures; history is invalidated on resize. Fast-moving hard edges show one-point stair steps because the clamp rejects most history there.
+1. Nebula raymarch at half point resolution (`Tuning.nebulaPointDivisor`) into rgba16f plus r32f radiance-weighted depth, with rays jittered per frame by a 16-frame Halton sequence. Sheets are widened only to the history pixel footprint, not the coarser nebula one; jitter and accumulation resolve them.
+2. Temporal upscale into point-resolution history (`historyPointDivisor`): the new frame is reconstructed from its jittered samples with a gaussian of their true distances, last frame's result is reprojected through the camera motion at the coarse depth and clamped to the 3x3 neighbourhood, and the blend weight (`Tuning.temporalBlend`) is scaled by how close this frame's sample landed. Ping-pong history textures; history is invalidated on resize. Fast-moving hard edges show one-point stair steps because the clamp rejects most history there.
 3. Bloom: 13-tap downsample chain from the resolved nebula (Karis average on the first level), tent upsample accumulated back up.
 4. Final: chromatic aberration, bloom mix, exposure, vignette, saturation, ACES fit tonemap, sRGB encode, grain, dither.
 
