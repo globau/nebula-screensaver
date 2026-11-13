@@ -289,17 +289,19 @@ fragment NebulaOut nebulaFragment(FullscreenOut in [[stage_in]],
         gained *= shellMask * next.shell.limb;
 
         // fine filigree in patches, gold and red
-        float filigreeMask = smoothstep(0.52, 0.75, next.region.x) * (0.4 + next.detail.x);
-        float3 filigreeColour = mix(ember, gold, smoothstep(0.35, 0.65, next.detail.y));
-        float3 fil = 0;
-        for (int k = 0; k < filigreeCount; k++) {
-            constant Sheet &s = filigree[k];
-            float w = max(s.width, footprint);
-            float c = crossing((last.filigree.value - s.level) / last.filigree.gradient,
-                               (next.filigree.value - s.level) / next.filigree.gradient, w, len);
-            fil += mix(filigreeColour, float3(1.0, 0.8, 0.45), 0.2 * s.width / w) * c * s.brightness;
+        if (next.region.x > 0.52) {
+            float filigreeMask = smoothstep(0.52, 0.75, next.region.x) * (0.4 + next.detail.x);
+            float3 filigreeColour = mix(ember, gold, smoothstep(0.35, 0.65, next.detail.y));
+            float3 fil = 0;
+            for (int k = 0; k < filigreeCount; k++) {
+                constant Sheet &s = filigree[k];
+                float w = max(s.width, footprint);
+                float c = crossing((last.filigree.value - s.level) / last.filigree.gradient,
+                                   (next.filigree.value - s.level) / next.filigree.gradient, w, len);
+                fil += mix(filigreeColour, float3(1.0, 0.8, 0.45), 0.2 * s.width / w) * c * s.brightness;
+            }
+            gained += fil * filigreeMask * next.filigree.limb;
         }
-        gained += fil * filigreeMask * next.filigree.limb;
 
         // diffuse hydrogen glow and dust
         float haze = smoothstep(0.3, 0.85, next.region.x) * smoothstep(0.25, 0.85, next.warp.y);
