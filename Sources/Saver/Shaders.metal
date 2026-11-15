@@ -212,6 +212,19 @@ static float crossing(float d0, float d1, float w, float len) {
     return len * (erfApprox(d1 / w) - erfApprox(d0 / w)) / (2.0 * dd);
 }
 
+// true when every sheet of a group is beyond crossing's cutoff at both ends of a step
+static bool groupMissed(Field a, Field b, constant Sheet *sheets, int count, float footprint) {
+    float lo = sheets[0].level, hi = lo, w = 0;
+    for (int k = 0; k < count; k++) {
+        lo = min(lo, sheets[k].level);
+        hi = max(hi, sheets[k].level);
+        w = max(w, max(sheets[k].width, footprint));
+    }
+    float limit = 4.5 * w;
+    return (a.value - hi > limit * a.gradient && b.value - hi > limit * b.gradient) ||
+           (a.value - lo < -limit * a.gradient && b.value - lo < -limit * b.gradient);
+}
+
 struct Point {
     float2 region;
     float2 warp;
@@ -251,7 +264,9 @@ fragment NebulaOut nebulaFragment(FullscreenOut in [[stage_in]],
 
     const float tMin = 0.3;
     const float tMax = 260.0;
-    float jitter = ign(in.position.xy + u.params.y * 5.588238);
+    // the step offset is shared by 8x8 pixel blocks: per-pixel offsets scatter neighbouring rays
+    // along their length, and the fine noise fetches then miss the texture cache
+    float jitter = ign(floor(in.position.xy / 8.0) + u.params.y * 5.588238);
     float t = tMin;
     // nothing to gather until the ray can reach the pocket wall
     float3 pocket = u.pocket.xyz;
@@ -282,17 +297,19 @@ fragment NebulaOut nebulaFragment(FullscreenOut in [[stage_in]],
         // large layered shells, blue oxygen emission, everywhere but uneven
         float shellMask = mix(0.15, 1.0, smoothstep(0.35, 0.7, next.region.y)) * mix(0.3, 1.5, next.detail.x);
         float3 shellColour = mix(shellBlue, shellCyan, smoothstep(0.3, 0.7, next.warp.x));
-        for (int k = 0; k < shellCount; k++) {
-            constant Sheet &s = shells[k];
-            float w = max(s.width, footprint);
-            float c = crossing((last.shell.value - s.level) / last.shell.gradient,
-                               (next.shell.value - s.level) / next.shell.gradient, w, len);
-            gained += mix(shellColour, float3(0.75, 0.88, 1.0), 0.2 * s.width / w) * c * s.brightness;
+        if (!groupMissed(last.shell, next.shell, shells, shellCount, footprint)) {
+            for (int k = 0; k < shellCount; k++) {
+                constant Sheet &s = shells[k];
+                float w = max(s.width, footprint);
+                float c = crossing((last.shell.value - s.level) / last.shell.gradient,
+                                   (next.shell.value - s.level) / next.shell.gradient, w, len);
+                gained += mix(shellColour, float3(0.75, 0.88, 1.0), 0.2 * s.width / w) * c * s.brightness;
+            }
+            gained *= shellMask * next.shell.limb;
         }
-        gained *= shellMask * next.shell.limb;
 
         // fine filigree in patches, gold and red
-        if (next.region.x > 0.52) {
+        if (next.region.x > 0.52 && !groupMissed(last.filigree, next.filigree, filigree, filigreeCount, footprint)) {
             float filigreeMask = smoothstep(0.52, 0.75, next.region.x) * (0.4 + next.detail.x);
             float3 filigreeColour = mix(ember, gold, smoothstep(0.35, 0.65, next.detail.y));
             float3 fil = 0;

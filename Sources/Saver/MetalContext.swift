@@ -103,7 +103,7 @@ final class MetalContext {
             return device.makeTexture(descriptor: descriptor)
         }
         let pipeline = try device.makeComputePipelineState(function: kernel)
-        guard let noise = volume(.rg16Float), let sheet = volume(.rgba16Float),
+        guard let noise = volume(.rg8Unorm), let sheet = volume(.rgba16Float),
               let buffer = queue.makeCommandBuffer(),
               let encoder = buffer.makeComputeCommandEncoder() else {
             throw SetupError("noise generation setup failed")
