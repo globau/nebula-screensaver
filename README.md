@@ -16,7 +16,7 @@ macOS 14 or later on Apple silicon.  It is tuned for HiDPI displays.
 
 ## Installing
 
-Download the latest `nebula-<version>.zip` from the [Releases](../../releases) page and unzip it.  Double-click `Nebula.saver` and macOS will offer to install it, then choose Nebula in System Settings under Screen Saver.  To update, install a newer release over the top.
+Download the latest `nebula-v<version>.zip` from the [Releases](../../releases) page and unzip it.  Double-click `Nebula.saver` and macOS will offer to install it, then choose Nebula in System Settings under Screen Saver.  To update, install a newer release over the top.
 
 ## Building from source
 

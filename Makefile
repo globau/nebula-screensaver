@@ -9,7 +9,10 @@ INSTALL_DIR := $(HOME)/Library/Screen Savers
 
 # a plain release number, not semver; it is both the bundle's short version and its build number
 VERSION := $(shell cat VERSION)
-ZIP := $(BUILD)/nebula-$(VERSION).zip
+ZIP := $(BUILD)/nebula-v$(VERSION).zip
+# the body of this version's CHANGELOG.md section, without its heading or surrounding blank lines
+RELEASE_NOTES := awk '/^\#\# / { inside = ($$2 == "v$(VERSION)"); next } \
+	inside && (NF || started) { started = 1; pending = pending $$0 "\n"; if (NF) { printf "%s", pending; pending = "" } }' CHANGELOG.md
 
 # first developer id in the keychain, falling back to ad-hoc; override with make SIGN_IDENTITY=...
 SIGN_IDENTITY ?= $(or $(shell security find-identity -v -p codesigning | grep -m1 -o '"Developer ID Application[^"]*"' | tr -d '"'),-)
@@ -111,9 +114,10 @@ release:
 	test -z "$$(git log HEAD --not --remotes --format=%H)" || { echo "cannot publish with unpushed changes" >&2; exit 1; }
 	test "$$(git rev-list --count HEAD..origin/main)" = 0 || { echo "cannot publish as local clone is behind origin" >&2; exit 1; }
 	! gh release view "v$(VERSION)" >/dev/null 2>&1 || { echo "v$(VERSION) has already been published" >&2; exit 1; }
+	test -n "$$($(RELEASE_NOTES))" || { echo "CHANGELOG.md has no entries for v$(VERSION)" >&2; exit 1; }
 	$(MAKE) dist
-	gh release create "v$(VERSION)" "$(ZIP)" --target "$$(git rev-parse HEAD)" \
-		--title "Nebula $(VERSION)" --generate-notes
+	$(RELEASE_NOTES) | gh release create "v$(VERSION)" "$(ZIP)" --target "$$(git rev-parse HEAD)" \
+		--title "Nebula v$(VERSION)" --notes-file -
 
 clean:
 	rm -rf $(BUILD)
