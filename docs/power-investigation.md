@@ -83,12 +83,6 @@ All three runs below rendered 1,800 frames in approximately 60.005 seconds at 30
 | Filigree guard | 0.030 | 5.854 | 5.824 | 5.893 | 8.934 |
 | Filigree and integration guards | 0.092 | 5.723 | 5.631 | 4.720 | 7.630 |
 
-Local result directories, in the same order:
-
-- `build/profiles/20261113-082114-mc8C0S`
-- `build/profiles/20261113-082640-UmyiKF`
-- `build/profiles/20261113-085410-S6eQsh`
-
 The final run's CPU baseline was 1.578 W, versus 0.666 W during rendering.  That elevated baseline explains the negative CPU increase and exaggerates the apparent combined-power saving.  It is not evidence that rendering reduces CPU power.
 
 GPU rendering power fell by 0.131 W between the last two runs; baseline-adjusted GPU power fell by 0.193 W.  These are promising differences, but concurrent Mac use and changing run conditions prevent confidently attributing them entirely to the shader change.  The much larger change in GPU milliseconds across these runs likewise exceeds the gain in the fresh paired timing comparison.
@@ -105,11 +99,9 @@ With the filigree guard, before the integration guard, the full diagnostic produ
 | Bloom up | 0.051 | 0.5% |
 | Final | 0.099 | 1.0% |
 
-Whole-frame GPU time was 9.029 ms, demonstrating why overlapping stage intervals cannot simply be added to obtain frame time.  Raw results: `build/timings/run-pnIQn1/`.
+Whole-frame GPU time was 9.029 ms, demonstrating why overlapping stage intervals cannot simply be added to obtain frame time.
 
-The fresh paired comparison for the integration guard is under `build/raymarch-comparison/Original-timings-z368KD/` and `build/raymarch-comparison/Guarded-timings-qUf5fE/`.  Here, “Original” already includes the filigree guard.  Snapshot comparisons and experimental bundles are also under `build/raymarch-comparison/`.
-
-Build artefacts may disappear after `make clean`; the tables above preserve the important results.  Initial idle readings from a failed `StarsaverHarness` launch were not rendering measurements: the correct executable is `build/NebulaHarness.app/Contents/MacOS/NebulaHarness`.  Earlier random windowed and fullscreen runs are not controlled comparisons with this fixed-seed offscreen workload.
+The raw result directories are not in the repo; the tables above preserve the important results.  Initial idle readings from a failed `StarsaverHarness` launch were not rendering measurements: the correct executable is `build/NebulaHarness.app/Contents/MacOS/NebulaHarness`.  Earlier random windowed and fullscreen runs are not controlled comparisons with this fixed-seed offscreen workload.
 
 ## Experiments discarded
 
@@ -161,13 +153,13 @@ Power, `make profile` defaults, alternating original and new builds; every run r
 | Original 2 | 4.368 | 4.356 | 4.480 |
 | Block jitter 2 | 3.660 | 3.647 | 3.600 |
 
-GPU power fell by about 0.69 W (15%), combined baseline-adjusted power by about 0.80 W (18%).  The power saving is smaller than the 35% reduction in unpaced GPU time because the paced GPU lowers its clock rather than idling.  Results: `build/profiles/Base/` and `build/profiles/New/`.
+GPU power fell by about 0.69 W (15%), combined baseline-adjusted power by about 0.80 W (18%).  The power saving is smaller than the 35% reduction in unpaced GPU time because the paced GPU lowers its clock rather than idling.
 
 ### Retained: 8-bit noise volume
 
 The `noise` volume (region, warp, detail) is `rg8Unorm` instead of `rg16Float`; its values were already saturated to 0-1.  Unpaced against the block-jitter build: seed 1 at 60 s 10.45 to 7.85 ms, seed 3 at 75 s 10.36 to 7.91, seed 5 at 120 s 9.92 to 7.35, seed 1 at 8 s 9.58 to 8.63.  Images differ by mean 0.05-0.14 of an 8-bit level (PSNR 56-61 dB), visually identical in amplified-difference crops.
 
-Power, alternating with the block-jitter build (two runs each, all 1,800 frames at 30.00 fps): GPU increase 3.663 and 3.652 W against 3.513 and 3.482 W, a 0.16 W (4.4%) saving.  The second 8-bit run had CPU activity (0.52 W rendering) that does not affect the GPU figure.  Results: `build/profiles/New/2026111516*` and `build/profiles/Rg8/`.
+Power, alternating with the block-jitter build (two runs each, all 1,800 frames at 30.00 fps): GPU increase 3.663 and 3.652 W against 3.513 and 3.482 W, a 0.16 W (4.4%) saving.  The second 8-bit run had CPU activity (0.52 W rendering) that does not affect the GPU figure.
 
 ### The operating point: why power falls less than GPU time
 
@@ -184,7 +176,7 @@ Power ablation on top of 8-bit noise, removing all sheet integration (fetches ke
 
 `groupMissed` tests the five shells (levels 0.465-0.535) and the three filigree sheets once per step, against the group's level range and widest sheet, and skips the loop when both endpoints are beyond `crossing`'s cutoff for every sheet.  This was discarded earlier as too small, but only because cache misses hid the arithmetic.  Unpaced against 8-bit noise: seed 1 at 60 s 7.88 to 6.11 ms, seed 1 at 8 s 8.71 to 6.77, seed 3 at 75 s 7.95 to 5.98, seed 5 at 120 s 7.48 to 5.64, close to the no-integration ablation.  All four snapshots byte-identical.
 
-Power, alternating with 8-bit noise: GPU increase 2.621 and 2.631 W against 3.482 and 3.511 W in the same session, a 0.87 W (25%) saving, within 0.03 W of the no-integration ablation.  The GPU now spends about 74% of its time at 338 MHz and under 5% at 618 MHz; active residency stays near 77%.  Results: `build/profiles/Group/`.
+Power, alternating with 8-bit noise: GPU increase 2.621 and 2.631 W against 3.482 and 3.511 W in the same session, a 0.87 W (25%) saving, within 0.03 W of the no-integration ablation.  The GPU now spends about 74% of its time at 338 MHz and under 5% at 618 MHz; active residency stays near 77%.
 
 ### Cumulative, 15 November 2026
 
@@ -192,7 +184,7 @@ GPU power above idle at the profile defaults: original 4.33 W, block jitter 3.65
 
 ### Discarded: half-precision colour accumulation
 
-Uncommitted work from the other Mac converted the per-step colour arithmetic to `half`.  Unpaced: 16.3-16.8 ms against 16.3-16.5 ms for the original; no gain, consistent with arithmetic not being the limit.  Saved as `build/exp/half-precision.patch`.
+Uncommitted work from the other Mac converted the per-step colour arithmetic to `half`.  Unpaced: 16.3-16.8 ms against 16.3-16.5 ms for the original; no gain, consistent with arithmetic not being the limit.
 
 ## Next steps
 
