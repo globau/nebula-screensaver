@@ -103,6 +103,7 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
                               backing: .buffered, defer: false)
         window.title = "Nebula"
         guard let view = NebulaView(frame: frame, isPreview: false) else { NSApp.terminate(nil); return }
+        view.rendersOnAllScreens = true
         window.contentView = view
         window.center()
         window.makeKeyAndOrderFront(nil)

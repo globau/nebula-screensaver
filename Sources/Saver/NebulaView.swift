@@ -9,6 +9,9 @@ final class NebulaView: ScreenSaverView {
     private var lastTimestamp: CFTimeInterval?
     private var stopObserver: NSObjectProtocol?
 
+    // when false, only the primary screen (the one with the menu bar) renders; the others stay black
+    var rendersOnAllScreens = false
+
     private var metalLayer: CAMetalLayer? { layer as? CAMetalLayer }
 
     override init?(frame: NSRect, isPreview: Bool) {
@@ -40,8 +43,6 @@ final class NebulaView: ScreenSaverView {
             metalLayer.isOpaque = true
             metalLayer.maximumDrawableCount = 3
             metalLayer.backgroundColor = NSColor.black.cgColor
-            // each launch and each screen gets its own flight
-            renderer = Renderer(context: context, seed: UInt64.random(in: .min ... .max))
         }
 
         stopObserver = DistributedNotificationCenter.default().addObserver(
@@ -55,9 +56,20 @@ final class NebulaView: ScreenSaverView {
         CAMetalLayer()
     }
 
+    private var isOnPrimaryScreen: Bool {
+        guard let screen = window?.screen, let primary = NSScreen.screens.first else { return true }
+        let key = NSDeviceDescriptionKey("NSScreenNumber")
+        return (screen.deviceDescription[key] as? NSNumber) == (primary.deviceDescription[key] as? NSNumber)
+    }
+
     override func startAnimation() {
         super.startAnimation()
-        guard link == nil, renderer != nil else { return }
+        guard link == nil else { return }
+        if renderer == nil, isPreview || rendersOnAllScreens || isOnPrimaryScreen, let context = MetalContext.shared {
+            // each launch gets its own flight
+            renderer = Renderer(context: context, seed: UInt64.random(in: .min ... .max))
+        }
+        guard renderer != nil else { return }
         updateDrawableSize()
         lastTimestamp = nil
         let link = displayLink(target: self, selector: #selector(tick(_:)))

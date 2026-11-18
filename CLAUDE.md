@@ -13,13 +13,13 @@ Do not reduce render resolution or frame rate for power optimisation; optimise w
 For measured results, discarded experiments and the next GPU investigation, read [the power investigation handover](docs/power-investigation.md) before further performance work.
 
 ## Layout
-- `Sources/Saver/NebulaView.swift` — `ScreenSaverView` subclass (`@objc(NebulaView)`, the `NSPrincipalClass`). Frames come from `NSView.displayLink`, not `animateOneFrame`.
+- `Sources/Saver/NebulaView.swift` — `ScreenSaverView` subclass (`@objc(NebulaView)`, the `NSPrincipalClass`). Frames come from `NSView.displayLink`, not `animateOneFrame`. Only the view on the primary screen (`NSScreen.screens.first`, the menu bar one, matched by `NSScreenNumber`) creates a renderer, in `startAnimation` once its window is known; views on other screens show only the layer's black background. Previews and views with `rendersOnAllScreens` (set by the harness) always render; a view with no screen yet also renders.
 - `Sources/Saver/Tuning.swift` — engine-level constants (speed, resolutions, post, pocket, world period); the look itself (sheet tables, tile sizes, colours, masks, march limits, pocket rag and rim) lives in `Shaders.metal`, and the banking constants in `Camera.swift`. `shaderMacros` injects `WORLD_PERIOD` into the shader so it has a single source.
 - `Sources/Saver/GPUTypes.swift` — `Uniforms`, `BloomStep`, mirrored by the structs at the top of `Shaders.metal`.
 - `Sources/Saver/Random.swift` — `SplitMix64`.
 - `Sources/Saver/FlightPath.swift` — endless centripetal Catmull-Rom spline (arc-length parametrised) through randomly swerving waypoints, after a straight run at the start.
-- `Sources/Saver/Camera.swift` — starts at a seeded random position, heading and route (the saver seeds each view randomly, so every launch and screen differs); follows the path (faster during the intro), banks into turns, up vector by parallel transport. `worldPosition` is unwrapped; `position` is wrapped for the shaders.
-- `Sources/Saver/MetalContext.swift` — shared device, pipelines and the baked 3D noise and sheet textures (one instance for every per-screen view).
+- `Sources/Saver/Camera.swift` — starts at a seeded random position, heading and route (the saver seeds each view randomly, so every launch differs); follows the path (faster during the intro), banks into turns, up vector by parallel transport. `worldPosition` is unwrapped; `position` is wrapped for the shaders.
+- `Sources/Saver/MetalContext.swift` — shared device, pipelines and the baked 3D noise and sheet textures (one instance shared by every view).
 - `Sources/Saver/Renderer.swift` — per-view camera, render targets and frame encoding.
 - `Sources/Saver/Shaders.metal` — all gpu code (see the pass list below).
 - `README.md`, `LICENSE` (MIT), `docs/screenshot.jpg` — the public repo's front page; the screenshot is seed 5 at 75 s, rendered 2880x1800 at 2x and saved as a 1920 px JPEG with `sips`. README prose follows the user's conventions: two spaces after full stops, straight quotes, ` - ` for dashes, and it states plainly that the project is vibe coded.

@@ -4,7 +4,7 @@ A macOS screensaver that flies endlessly through a glowing supernova remnant.
 
 ![Nebula screensaver](docs/screenshot.jpg)
 
-Each launch starts in empty space, flies out through the ragged edge of the nebula and then drifts through layered blue shock fronts, gold filigree and red hydrogen haze.  Every screen gets its own random route, so no two runs look the same.  It is raymarched on the GPU in Metal with a filmic HDR pipeline, and all of it is procedural - there are no images or videos involved.
+Each launch starts in empty space, flies out through the ragged edge of the nebula and then drifts through layered blue shock fronts, gold filigree and red hydrogen haze.  Every launch gets its own random route, so no two runs look the same.  With several displays only the main one (the one with the menu bar) shows the nebula; the others stay black.  It is raymarched on the GPU in Metal with a filmic HDR pipeline, and all of it is procedural - there are no images or videos involved.
 
 ## Vibe coded
 
